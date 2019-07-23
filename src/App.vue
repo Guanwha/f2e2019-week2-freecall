@@ -1,28 +1,28 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <HelloWorld/>
+    <FreeCall/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
+import FreeCall from './pages/FreeCall';
 
 export default {
   name: 'App',
   components: {
-    HelloWorld,
+    FreeCall,
   },
 };
 </script>
 
-<style>
+<style lang="scss">
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  /* font-family: 'Avenir', Helvetica, Arial, sans-serif; */
+  font-family: 'Press Start 2P', cursive;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+
+  height: 100%;
 }
 </style>

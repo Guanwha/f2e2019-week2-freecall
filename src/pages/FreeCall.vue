@@ -6,16 +6,16 @@
       <div class="main-playarea">
         <div class="playarea-upper">
           <div class="area-temp">
-            <div class="card"/>
-            <div class="card"/>
-            <div class="card"/>
-            <div class="card"/>
+            <Card v-bind:pCardID='tempSlotCard(0)' v-bind:pSlotType='slotTypes.temp'/>
+            <Card v-bind:pCardID='tempSlotCard(1)' v-bind:pSlotType='slotTypes.temp'/>
+            <Card v-bind:pCardID='tempSlotCard(2)' v-bind:pSlotType='slotTypes.temp'/>
+            <Card v-bind:pCardID='tempSlotCard(3)' v-bind:pSlotType='slotTypes.temp'/>
           </div>
           <div class="area-finished">
-            <div class="card"/>
-            <div class="card"/>
-            <div class="card"/>
-            <div class="card"/>
+            <Card v-bind:pCardID='finishSlotTopCard(1)' v-bind:pSlotType='slotTypes.finished'/>
+            <Card v-bind:pCardID='finishSlotTopCard(2)' v-bind:pSlotType='slotTypes.finished'/>
+            <Card v-bind:pCardID='finishSlotTopCard(3)' v-bind:pSlotType='slotTypes.finished'/>
+            <Card v-bind:pCardID='finishSlotTopCard(4)' v-bind:pSlotType='slotTypes.finished'/>
           </div>
         </div>
         <div class="playarea-lower"/>
@@ -27,18 +27,24 @@
 </template>
 
 <script>
+import Card from '../components/Card';
+import { cSlotTypes } from '../common/constants';
+
 export default {
   name: 'FreeCall',
+  components: {
+    Card,
+  },
   data() {
     return {
-      cards_temp: [],
-      cards_finished: {
+      cardsTemp: [33],
+      cardsFinished: {
         1: [],
         2: [],
         3: [],
         4: [],
       },
-      cards_play: {
+      cardsPlay: {
         1: [],
         2: [],
         3: [],
@@ -48,7 +54,17 @@ export default {
         7: [],
         8: [],
       },
+      slotTypes: cSlotTypes,
     };
+  },
+  methods: {
+    tempSlotCard(i) {
+      return this.cardsTemp[i];
+    },
+    finishSlotTopCard(i) {
+      const idx = this.cardsFinished[i].length - 1;
+      return this.cardsFinished[i][idx];
+    },
   },
 };
 </script>

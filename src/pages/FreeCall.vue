@@ -31,7 +31,20 @@
             <Card v-bind:pCardID='finishSlotTopCard(4)' v-bind:pSlotType='slotTypes.finished'/>
           </div>
         </div>
-        <div class="playarea-lower"/>
+        <div class="playarea-lower">
+          <div class="lower-left">
+            <div class="area-play"/>
+            <div class="area-play"/>
+            <div class="area-play"/>
+            <div class="area-play"/>
+          </div>
+          <div class="lower-right">
+            <div class="area-play"/>
+            <div class="area-play"/>
+            <div class="area-play"/>
+            <div class="area-play"/>
+          </div>
+        </div>
       </div>
       <div class="main-footer">
         <img class="left" src="../assets/bg-left.png">
@@ -57,7 +70,7 @@ export default {
   },
   data() {
     return {
-      cardsTemp: [33],
+      cardsTemp: [],
       cardsFinished: {
         1: [],
         2: [],
@@ -192,21 +205,23 @@ export default {
 .playarea {
   &-upper {
     height: 145px;
-    // background: yellow;
     flex-shrink: 0;
     margin: 30px 85px 0 85px;
     display: flex;
   }
   &-lower {
-    // background: lightgreen;
+    background: lightgreen;
     flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 19px 0 0 0;
   }
 }
 .area {
   &-temp {
     width: 50%;
     height: 100%;
-    // background: orange;
     margin-right: 43px;
     display: flex;
     justify-content: space-between;
@@ -214,17 +229,29 @@ export default {
   &-finished {
     width: 50%;
     height: 100%;
-    // background: orangered;
     margin-left: 43px;
     display: flex;
     justify-content: space-between;
   }
 }
-.card {
+.lower-left {
+  width: 50%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0 43px 0 85px;
+}
+.lower-right {
+  width: 50%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0 85px 0 43px;
+}
+.area-play {
   width: 110px;
-  height: 145px;
-  border: 2px solid #665e58;
-  border-radius: 10px;
+  height: 100%;
+  background: purple;
 }
 </style>
 

@@ -39,8 +39,22 @@
             <div class="area-play"/>
           </div>
           <div class="lower-right">
-            <div class="area-play"/>
-            <div class="area-play"/>
+            <div class="area-play">
+              <div v-for="(item, index) in cardsPlay[5]"
+                   v-bind:key="index"
+                   v-bind:style="{position: 'absolute', top: cardShiftY(index)}">
+                <Card v-bind:pCardID="item"
+                      v-bind:pSlotType="slotTypes.normal"/>
+              </div>
+            </div>
+            <div class="area-play">
+              <div v-for="(item, index) in cardsPlay[6]"
+                   v-bind:key="index"
+                   v-bind:style="{position: 'absolute', top: cardShiftY(index)}">
+                <Card v-bind:pCardID="item"
+                      v-bind:pSlotType="slotTypes.normal"/>
+              </div>
+            </div>
             <div class="area-play"/>
             <div class="area-play"/>
           </div>
@@ -82,8 +96,8 @@ export default {
         2: [],
         3: [],
         4: [],
-        5: [],
-        6: [],
+        5: [14, 15, 16],
+        6: [17, 18, 19, 20],
         7: [],
         8: [],
       },
@@ -100,6 +114,9 @@ export default {
     finishSlotTopCard(i) {
       const idx = this.cardsFinished[i].length - 1;
       return this.cardsFinished[i][idx];
+    },
+    cardShiftY(idx) {
+      return (idx) ? `${37 * idx}px` : 0;
     },
   },
   computed: {
@@ -204,7 +221,7 @@ export default {
 }
 .playarea {
   &-upper {
-    height: 145px;
+    height: $card-height;
     flex-shrink: 0;
     margin: 30px 85px 0 85px;
     display: flex;
@@ -249,9 +266,10 @@ export default {
   padding: 0 85px 0 43px;
 }
 .area-play {
-  width: 110px;
+  width: $card-width;
   height: 100%;
   background: purple;
+  position: relative;
 }
 </style>
 

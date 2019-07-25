@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-bind:class="[showEmpty ? 'frame-card' : 'frame-card-hover']">
     <img v-if='showCard' v-bind:src=imgPath>
     <div v-if='showEmptyTemp' class='temp'/>
     <div v-if='showEmptyFinished' class='finished'>
@@ -39,6 +39,9 @@ export default {
       return ((this.curSlotType === this.slotTypes.finished)
           && (!this.curCardID || this.curCardID <= 0));
     },
+    showEmpty() {
+      return this.showEmptyTemp || this.showEmptyFinished;
+    },
   },
 };
 </script>
@@ -46,15 +49,23 @@ export default {
 <style lang="scss" scoped>
 @import '../styles/_variables.scss';
 
+.frame-card {
+  width: $card-width;
+  height: $card-height;
+  &-hover:hover {
+    border-radius: 11px;
+    box-shadow: 0 0 0 3px orange;
+  }
+}
 .temp {
-  width: 110px;
-  height: 145px;
+  width: $card-width;
+  height: $card-height;
   border: 2px solid $color-card-line;
   border-radius: 10px;
 }
 .finished {
-  width: 110px;
-  height: 145px;
+  width: $card-width;
+  height: $card-height;
   border: 2px solid $color-card-line;
   border-radius: 10px;
   display: flex;

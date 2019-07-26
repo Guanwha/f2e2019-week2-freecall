@@ -47,6 +47,8 @@ module.exports = {
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     // allow multi-spaces before comments for reading
-    'no-multi-spaces': ["error", { ignoreEOLComments: true }]
+    'no-multi-spaces': ["error", { ignoreEOLComments: true }],
+    // allow else can be next-line
+    'brace-style': ["error", "stroustrup"],
   }
 }

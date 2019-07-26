@@ -26,18 +26,18 @@ export default {
   },
   computed: {
     imgPath() {
-      return `./static/${cCards(this.curCardID)}`;
+      return `./static/${cCards(this.pCardID)}`;
     },
     showCard() {
-      return ((this.curSlotType === this.slotTypes.normal) || (this.curCardID > 0));
+      return ((this.pSlotType === this.slotTypes.normal) || (this.pCardID > 0));
     },
     showEmptyTemp() {
-      return ((this.curSlotType === this.slotTypes.temp)
-          && (!this.curCardID || this.curCardID <= 0));
+      return ((this.pSlotType === this.slotTypes.temp)
+          && (!this.pCardID || this.pCardID <= 0));
     },
     showEmptyFinished() {
-      return ((this.curSlotType === this.slotTypes.finished)
-          && (!this.curCardID || this.curCardID <= 0));
+      return ((this.pSlotType === this.slotTypes.finished)
+          && (!this.pCardID || this.pCardID <= 0));
     },
     showEmpty() {
       return this.showEmptyTemp || this.showEmptyFinished;

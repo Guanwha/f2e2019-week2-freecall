@@ -247,7 +247,7 @@ export default {
         [45],
       ],
       cardsDragging: {
-        fromSlotID: -1,
+        srcSlotID: -1,
         cardIdx: -1,
       },
       slotTypes: cSlotTypes,
@@ -271,81 +271,81 @@ export default {
       return (idx) ? `${37 * idx}px` : 0;
     },
     // drag & drop
-    // -- slotID: source slot ID
+    // -- srcSlotID: source slot ID
     // -- cardIdx: card index in this slot
-    dragStart(event, slotID, cardIdx) {
-      const fromSlot = this.getSlot(slotID);
+    dragStart(event, srcSlotID, cardIdx) {
+      const srcSlot = this.getSlot(srcSlotID);
       // skip
-      if (!fromSlot || !fromSlot[cardIdx]                       // skip empty source slot
-          || !this.canDrag(slotID, cardIdx)) {                  // check dragging is fit the rule
+      if (!srcSlot || !srcSlot[cardIdx]                           // skip empty source slot
+          || !this.canDrag(srcSlotID, cardIdx)) {                 // check dragging is fit the rule
         event.preventDefault();
         return;
       }
       // remember this source slot and card index
-      this.cardsDragging.fromSlotID = slotID;
+      this.cardsDragging.srcSlotID = srcSlotID;
       this.cardsDragging.cardIdx = cardIdx;
     },
     dragEnd(event) {
       event.dataTransfer.clearData();
     },
-    // -- slotID: target slot ID
-    drop(event, slotID) {
-      if (slotID === this.cardsDragging.fromSlotID) return;     // skip source === target
+    // -- tarSlotID: target slot ID
+    drop(event, tarSlotID) {
+      if (tarSlotID === this.cardsDragging.srcSlotID) return;     // skip source === target
 
-      if (slotID <= this.playSlotID7) {
+      if (tarSlotID <= this.playSlotID7) {
         // target slot is in play area
         const startIdx = this.cardsDragging.cardIdx;
-        const fromSlotID = this.cardsDragging.fromSlotID;
-        const fromSlot = this.getSlot(fromSlotID);
-        const toSlot = this.getSlot(slotID);
+        const srcSlotID = this.cardsDragging.srcSlotID;
+        const srcSlot = this.getSlot(srcSlotID);
+        const toSlot = this.getSlot(tarSlotID);
         // -- move from source to target
-        if (fromSlotID <= this.playSlotID7) {
+        if (srcSlotID <= this.playSlotID7) {
           // from play slot to play slot
-          if (!this.canPlayToPlay((fromSlotID - this.playSlotID0),
+          if (!this.canPlayToPlay((srcSlotID - this.playSlotID0),
                                   startIdx,
-                                  slotID - this.playSlotID0)) return;
-          for (let i = startIdx; i < fromSlot.length; i += 1) {
-            toSlot.push(fromSlot[i]);
-            fromSlot.splice(i, 1);
+                                  tarSlotID - this.playSlotID0)) return;
+          for (let i = startIdx; i < srcSlot.length; i += 1) {
+            toSlot.push(srcSlot[i]);
+            srcSlot.splice(i, 1);
             i -= 1;
-            // console.log(`${JSON.stringify(fromSlot)} -- ${JSON.stringify(toSlot)}`);
+            // console.log(`${JSON.stringify(srcSlot)} -- ${JSON.stringify(toSlot)}`);
           }
         }
-        else if (fromSlotID <= this.finishedSlotID3) {
+        else if (srcSlotID <= this.finishedSlotID3) {
           // from finished slot to play slot
-          if (!this.canFinishedToPlay((fromSlotID - this.finishedSlotID0),
+          if (!this.canFinishedToPlay((srcSlotID - this.finishedSlotID0),
                                       startIdx,
-                                      slotID - this.playSlotID0)) return;
-          toSlot.push(fromSlot[fromSlot.length - 1]);
-          fromSlot.pop();
+                                      tarSlotID - this.playSlotID0)) return;
+          toSlot.push(srcSlot[srcSlot.length - 1]);
+          srcSlot.pop();
         }
-        else if (fromSlotID <= this.tempSlotID3) {
+        else if (srcSlotID <= this.tempSlotID3) {
           // from temp slot to play slot
-          if (!this.canTempToPlay((fromSlotID - this.tempSlotID0),
-                                  slotID - this.playSlotID0)) return;
-          toSlot.push(fromSlot[0]);
-          fromSlot.pop();
+          if (!this.canTempToPlay((srcSlotID - this.tempSlotID0),
+                                  tarSlotID - this.playSlotID0)) return;
+          toSlot.push(srcSlot[0]);
+          srcSlot.pop();
         }
       }
-      else if (slotID <= this.finishedSlotID3) {
+      else if (tarSlotID <= this.finishedSlotID3) {
         // target slot is in finished area
         const startIdx = this.cardsDragging.cardIdx;
-        const fromSlot = this.getSlot(this.cardsDragging.fromSlotID);
-        if (startIdx < fromSlot.length - 1) return;       // skip if source has over 2 cards
+        const srcSlot = this.getSlot(this.cardsDragging.srcSlotID);
+        if (startIdx < srcSlot.length - 1) return;       // skip if source has over 2 cards
         // -- from any slot to finished slot
-        this.cardsFinished[slotID - this.finishedSlotID0].push(fromSlot[fromSlot.length - 1]);
-        fromSlot.pop();
+        this.cardsFinished[tarSlotID - this.finishedSlotID0].push(srcSlot[srcSlot.length - 1]);
+        srcSlot.pop();
       }
-      else if (slotID <= this.tempSlotID3) {
+      else if (tarSlotID <= this.tempSlotID3) {
         // target slot is in temp area
         const startIdx = this.cardsDragging.cardIdx;
-        const fromSlot = this.getSlot(this.cardsDragging.fromSlotID);
-        if (startIdx < fromSlot.length - 1) return;        // skip if dragging over 2 cards
+        const srcSlot = this.getSlot(this.cardsDragging.srcSlotID);
+        if (startIdx < srcSlot.length - 1) return;        // skip if dragging over 2 cards
         // -- from any slot to temp slot
-        const tempSlotID = slotID - this.tempSlotID0;
+        const tempSlotID = tarSlotID - this.tempSlotID0;
         if (this.cardsTemp[tempSlotID][0]) return;         // skip if target has a card
-        this.cardsTemp[tempSlotID][0] = fromSlot[fromSlot.length - 1];
-        fromSlot.pop();
+        this.cardsTemp[tempSlotID][0] = srcSlot[srcSlot.length - 1];
+        srcSlot.pop();
       }
     },
     // get local id in play/finished/temp slot ID
@@ -416,12 +416,12 @@ export default {
       return cardsPlay;
     },
     // check draggin cards number
-    canDrag(slotID, cardIdx) {
+    canDrag(srcSlotID, cardIdx) {
       // skip check if source slot isn't in play area
-      if (slotID > this.playSlotID7) return true;
+      if (srcSlotID > this.playSlotID7) return true;
 
       // check cards is sequential
-      const playSlotID = this.getLocalSlotID(slotID);
+      const playSlotID = this.getLocalSlotID(srcSlotID);
       if (!this.isSequentialCards(playSlotID, cardIdx)) return false;
 
       // check moved card number

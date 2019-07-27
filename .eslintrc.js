@@ -50,5 +50,7 @@ module.exports = {
     'no-multi-spaces': ["error", { ignoreEOLComments: true }],
     // allow else can be next-line
     'brace-style': ["error", "stroustrup"],
+    // allow function parameter indent
+    'indent': ["error", 2, {"FunctionExpression": {"parameters": "first"}, "CallExpression": {"arguments": "first"}}],
   }
 }

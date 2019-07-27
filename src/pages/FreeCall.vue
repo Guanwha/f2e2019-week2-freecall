@@ -235,7 +235,17 @@ export default {
       tempSlotID3: 15,
       cardsTemp: this.clearTempCards(),
       cardsFinished: this.clearFinishedCards(),
-      cardsPlay: this.newGame(),
+      // cardsPlay: this.newGame(),
+      cardsPlay: [
+        [],
+        [39, 12, 37, 10, 35, 8, 33, 6, 31, 4],
+        [23],
+        [41],
+        [42],
+        [43],
+        [44],
+        [45],
+      ],
       cardsDragging: {
         fromSlotID: -1,
         cardIdx: -1,
@@ -265,8 +275,9 @@ export default {
     // -- cardIdx: card index in this slot
     dragStart(event, slotID, cardIdx) {
       const fromSlot = this.getSlot(slotID);
-      // skip empty source slot
-      if (!fromSlot || !fromSlot[cardIdx]) {
+      // skip
+      if (!fromSlot || !fromSlot[cardIdx]                       // skip empty source slot
+          || !this.canDrag(slotID, cardIdx)) {                  // check dragging is fit the rule
         event.preventDefault();
         return;
       }
@@ -290,6 +301,9 @@ export default {
         // -- move from source to target
         if (fromSlotID <= this.playSlotID7) {
           // from play slot to play slot
+          if (!this.canPlayToPlay((fromSlotID - this.playSlotID0),
+                                  startIdx,
+                                  slotID - this.playSlotID0)) return;
           for (let i = startIdx; i < fromSlot.length; i += 1) {
             toSlot.push(fromSlot[i]);
             fromSlot.splice(i, 1);
@@ -329,7 +343,21 @@ export default {
         fromSlot.pop();
       }
     },
-    // calcuation functions
+    // get local id in play/finished/temp slot ID
+    getLocalSlotID(slotID) {
+      if (slotID < 0) return null;
+      if (slotID <= this.playSlotID7) {
+        return slotID - this.playSlotID0;
+      }
+      else if (slotID <= this.finishedSlotID3) {
+        return slotID - this.finishedSlotID0;
+      }
+      else if (slotID <= this.tempSlotID3) {
+        return slotID - this.tempSlotID0;
+      }
+      return null;
+    },
+    // get cards array according slot ID
     getSlot(slotID) {
       if (slotID < 0) return null;
       if (slotID <= this.playSlotID7) {
@@ -382,6 +410,87 @@ export default {
 
       return cardsPlay;
     },
+    // check draggin cards number
+    canDrag(slotID, cardIdx) {
+      // skip check if source slot isn't in play area
+      if (slotID > this.playSlotID7) return true;
+
+      // check cards is sequential
+      const playSlotID = this.getLocalSlotID(slotID);
+      if (!this.isSequentialCards(playSlotID, cardIdx)) return false;
+
+      // check moved card number
+      const nMovedCards = this.cardsPlay[playSlotID].length - cardIdx;
+      let nEmptySlot = this.emptySlotNumber;
+      nEmptySlot += 1;
+      console.log(`move ${nMovedCards} need under ${nEmptySlot}`);
+
+      return (nMovedCards <= nEmptySlot);
+    },
+    isSequentialCards(playSlotID, cardIdx) {
+      let i;
+      let beFirst = true;
+      let preCardInfo = {
+        num: -1,        // card # (1~13)
+        isRed: true,    // card color is red, or , is black
+      };
+      let cardInfo = {
+        num: -1,        // card # (1~13)
+        isRed: true,    // card color is red, or , is black
+      };
+      const cardSlot = this.cardsPlay[playSlotID];
+      const nTotalCards = cardSlot.length;
+      for (i = cardIdx; i < nTotalCards; i += 1) {
+        cardInfo = this.analysisCard(cardSlot[i]);
+        // don't check at first
+        if (beFirst) {
+          beFirst = false;
+        }
+        // check color
+        else if (preCardInfo.isRed === cardInfo.isRed) {
+          console.log(`${JSON.stringify(preCardInfo)} vs ${JSON.stringify(cardInfo)}`);
+          return false;
+        }
+        // check number
+        else if (preCardInfo.num !== cardInfo.num + 1) {
+          console.log(`${JSON.stringify(preCardInfo)} vs ${JSON.stringify(cardInfo)}`);
+          return false;
+        }
+
+        preCardInfo = cardInfo;
+      }
+      return true;
+    },
+    analysisCard(cardID) {
+      return {
+        num: ((cardID - 1) % 13) + 1,
+        isRed: (cardID <= 26),
+      };
+    },
+    canPlayToPlay(srcPlaySlotID, cardIdx, tarPlaySlotID) {
+      const sourceSlot = this.cardsPlay[srcPlaySlotID];
+      const targetSlot = this.cardsPlay[tarPlaySlotID];
+      const sourceCardInfo = this.analysisCard(sourceSlot[cardIdx]);
+      if (targetSlot.length === 0) {
+        // target slot is empty
+        const nMovedCards = sourceSlot.length - cardIdx;
+        const nEmptySlot = this.emptySlotNumber;
+        return (nMovedCards <= nEmptySlot);
+      }
+      // target slot isn't empty
+      const targetCardInfo = this.analysisCard(targetSlot[targetSlot.length - 1]);
+      console.log(sourceCardInfo);
+      console.log(targetCardInfo);
+      // check color
+      if (targetCardInfo.isRed === sourceCardInfo.isRed) {
+        return false;
+      }
+      // check number
+      else if (targetCardInfo.num !== sourceCardInfo.num + 1) {
+        return false;
+      }
+      return true;
+    },
   },
   computed: {
     playMinSec() {
@@ -391,6 +500,26 @@ export default {
         return (sec < 10) ? `0${min}:0${sec}` : `0${min}:${sec}`;
       }
       return (sec < 10) ? `${min}:0${sec}` : `${min}:${sec}`;
+    },
+    // calculate total empty number of temp/play slots
+    emptySlotNumber() {
+      let nEmptySlot = 0;
+      let i;
+      for (i = 0; i < 4; i += 1) {
+        if (this.cardsTemp[i].length === 0) {
+          nEmptySlot += 1;
+        }
+        if (this.cardsPlay[i].length === 0) {
+          nEmptySlot += 1;
+        }
+      }
+      for (i = 4; i < 8; i += 1) {
+        if (this.cardsPlay[i].length === 0) {
+          nEmptySlot += 1;
+        }
+      }
+
+      return nEmptySlot;
     },
   },
 };

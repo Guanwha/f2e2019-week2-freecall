@@ -233,23 +233,9 @@ export default {
       tempSlotID1: 13,
       tempSlotID2: 14,
       tempSlotID3: 15,
-      cardsTemp: [[], [], [], []],
-      cardsFinished: [
-        [],
-        [],
-        [],
-        [],
-      ],
-      cardsPlay: [
-        [],
-        [],
-        [],
-        [],
-        [14, 15, 16],
-        [17, 18, 19, 20],
-        [],
-        [],
-      ],
+      cardsTemp: this.clearTempCards(),
+      cardsFinished: this.clearFinishedCards(),
+      cardsPlay: this.newGame(),
       cardsDragging: {
         fromSlotID: -1,
         cardIdx: -1,
@@ -293,7 +279,7 @@ export default {
     },
     // -- slotID: target slot ID
     drop(event, slotID) {
-      if (slotID === this.cardsDragging.fromSlotID) return;    // skip source == target
+      if (slotID === this.cardsDragging.fromSlotID) return;     // skip source === target
 
       if (slotID <= this.playSlotID7) {
         // target slot is in play area
@@ -308,7 +294,7 @@ export default {
             toSlot.push(fromSlot[i]);
             fromSlot.splice(i, 1);
             i -= 1;
-            console.log(`${JSON.stringify(fromSlot)} -- ${JSON.stringify(toSlot)}`);
+            // console.log(`${JSON.stringify(fromSlot)} -- ${JSON.stringify(toSlot)}`);
           }
         }
         else if (fromSlotID <= this.finishedSlotID3) {
@@ -356,6 +342,45 @@ export default {
         return this.cardsTemp[slotID - this.tempSlotID0];
       }
       return null;
+    },
+    // generate new game
+    clearTempCards() {
+      return [[], [], [], []];
+    },
+    clearFinishedCards() {
+      return [[], [], [], []];
+    },
+    newGame() {
+      // initialize
+      let i;
+      const cardsPlay = [];
+      for (i = 0; i < 8; i += 1) {
+        cardsPlay[i] = [];
+      }
+
+      // random to generate new game
+      const cards = [];
+      let count = 52;
+      for (i = 0; i < count; i += 1) {
+        cards.push(i + 1);
+      }
+      let slotIdx;
+      let cardIdx;
+      let randIdx;
+      let nCards;
+      for (slotIdx = 0; slotIdx < 8; slotIdx += 1) {
+        nCards = (slotIdx < 4) ? 7 : 6;
+        for (cardIdx = 0; cardIdx < nCards; cardIdx += 1) {
+          randIdx = Math.floor(Math.random() * count);
+          // randIdx = count - 1;
+          cardsPlay[slotIdx][cardIdx] = cards[randIdx];
+          cards.splice(randIdx, 1);
+          count -= 1;
+        }
+      }
+      // console.log(cardsPlay);
+
+      return cardsPlay;
     },
   },
   computed: {

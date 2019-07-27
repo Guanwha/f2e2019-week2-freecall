@@ -313,11 +313,16 @@ export default {
         }
         else if (fromSlotID <= this.finishedSlotID3) {
           // from finished slot to play slot
+          if (!this.canFinishedToPlay((fromSlotID - this.finishedSlotID0),
+                                      startIdx,
+                                      slotID - this.playSlotID0)) return;
           toSlot.push(fromSlot[fromSlot.length - 1]);
           fromSlot.pop();
         }
         else if (fromSlotID <= this.tempSlotID3) {
           // from temp slot to play slot
+          if (!this.canTempToPlay((fromSlotID - this.tempSlotID0),
+                                  slotID - this.playSlotID0)) return;
           toSlot.push(fromSlot[0]);
           fromSlot.pop();
         }
@@ -446,14 +451,7 @@ export default {
         if (beFirst) {
           beFirst = false;
         }
-        // check color
-        else if (preCardInfo.isRed === cardInfo.isRed) {
-          console.log(`${JSON.stringify(preCardInfo)} vs ${JSON.stringify(cardInfo)}`);
-          return false;
-        }
-        // check number
-        else if (preCardInfo.num !== cardInfo.num + 1) {
-          console.log(`${JSON.stringify(preCardInfo)} vs ${JSON.stringify(cardInfo)}`);
+        else if (!this.checkLinkRule(cardInfo, preCardInfo)) {
           return false;
         }
 
@@ -470,7 +468,6 @@ export default {
     canPlayToPlay(srcPlaySlotID, cardIdx, tarPlaySlotID) {
       const sourceSlot = this.cardsPlay[srcPlaySlotID];
       const targetSlot = this.cardsPlay[tarPlaySlotID];
-      const sourceCardInfo = this.analysisCard(sourceSlot[cardIdx]);
       if (targetSlot.length === 0) {
         // target slot is empty
         const nMovedCards = sourceSlot.length - cardIdx;
@@ -478,9 +475,36 @@ export default {
         return (nMovedCards <= nEmptySlot);
       }
       // target slot isn't empty
+      const sourceCardInfo = this.analysisCard(sourceSlot[cardIdx]);
       const targetCardInfo = this.analysisCard(targetSlot[targetSlot.length - 1]);
-      console.log(sourceCardInfo);
-      console.log(targetCardInfo);
+      return this.checkLinkRule(sourceCardInfo, targetCardInfo);
+    },
+    canFinishedToPlay(srcFinishedSlotID, cardIdx, tarPlaySlotID) {
+      const targetSlot = this.cardsPlay[tarPlaySlotID];
+      if (targetSlot.length === 0) {
+        // target slot is empty
+        return true;
+      }
+      // target slot isn't empty
+      const sourceSlot = this.cardsFinished[srcFinishedSlotID];
+      const sourceCardInfo = this.analysisCard(sourceSlot[cardIdx]);
+      const targetCardInfo = this.analysisCard(targetSlot[targetSlot.length - 1]);
+      return this.checkLinkRule(sourceCardInfo, targetCardInfo);
+    },
+    canTempToPlay(srcTempSlotID, tarPlaySlotID) {
+      const targetSlot = this.cardsPlay[tarPlaySlotID];
+      if (targetSlot.length === 0) {
+        // target slot is empty
+        return true;
+      }
+      // target slot isn't empty
+      const sourceSlot = this.cardsTemp[srcTempSlotID];
+      const sourceCardInfo = this.analysisCard(sourceSlot[0]);
+      const targetCardInfo = this.analysisCard(targetSlot[targetSlot.length - 1]);
+      return this.checkLinkRule(sourceCardInfo, targetCardInfo);
+    },
+    // check source card can link to target card
+    checkLinkRule(sourceCardInfo, targetCardInfo) {
       // check color
       if (targetCardInfo.isRed === sourceCardInfo.isRed) {
         return false;

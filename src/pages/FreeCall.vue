@@ -602,28 +602,34 @@ export default {
     },
     findHintFromTempToFinished() {
       let i;
-      let j;
       this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
       for (i = 0; i < 4; i += 1) {
-        if (this.cardsTemp[i].length === 1) {
-          // temp slot has a card
-          const tempSlot = this.getSlot(this[`tempSlotID${i}`]);
-          for (j = 0; j < 4; j += 1) {
-            if (this.cardsFinished[j].length === 0) {
-              if ((this.cardsTemp[i][0] - 1) % 13 === 0) {
-                // found
-                this.setHint(this[`tempSlotID${i}`], this.cardsTemp[i][0], this[`finishedSlotID${j}`]);
-                return true;
-              }
+        if (this.findHintFromOneTempToFinished(i)) return true;
+      }
+      return false;
+    },
+    findHintFromOneTempToFinished(tempSlotID) {
+      const i = tempSlotID;
+      const tempSlot = this.cardsTemp[i];
+      let j;
+      if (tempSlot.length === 1) {
+        // temp slot has a card
+        for (j = 0; j < 4; j += 1) {
+          if (this.cardsFinished[j].length === 0) {
+            // finished slot is empty
+            if ((tempSlot[0] - 1) % 13 === 0) {
+              // found
+              this.setHint(this[`tempSlotID${i}`], tempSlot[0], this[`finishedSlotID${j}`]);
+              return true;
             }
-            else {
-              // finished slot has any card
-              const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
-              if (this.canAnyToFinished(tempSlot, 0, finishedSlot)) {
-                // found
-                this.setHint(this[`tempSlotID${i}`], this.cardsTemp[i][0], this[`finishedSlotID${j}`]);
-                return true;
-              }
+          }
+          else {
+            // finished slot has any card
+            const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
+            if (this.canAnyToFinished(tempSlot, 0, finishedSlot)) {
+              // found
+              this.setHint(this[`tempSlotID${i}`], tempSlot[0], this[`finishedSlotID${j}`]);
+              return true;
             }
           }
         }
@@ -632,30 +638,35 @@ export default {
     },
     findHintFromPlayToFinished() {
       let i;
-      let j;
       this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
       for (i = 0; i < 8; i += 1) {
-        const playSlot = this.cardsPlay[i];
-        if (playSlot.length > 0) {      // play slot has any card
-          const tailCardID = playSlot[playSlot.length - 1];
+        if (this.findHintFromOnePlayToFinished(i)) return true;
+      }
+      return false;
+    },
+    findHintFromOnePlayToFinished(playSlotID) {
+      const i = playSlotID;
+      const playSlot = this.cardsPlay[i];
+      let j;
+      if (playSlot.length > 0) {      // play slot has any card
+        const tailCardID = playSlot[playSlot.length - 1];
 
-          for (j = 0; j < 4; j += 1) {
-            if (this.cardsFinished[j].length === 0) {
-              // finished slot is empty
-              if ((tailCardID - 1) % 13 === 0) {
-                // found
-                this.setHint(this[`playSlotID${i}`], [tailCardID], this[`finishedSlotID${j}`]);
-                return true;
-              }
+        for (j = 0; j < 4; j += 1) {
+          if (this.cardsFinished[j].length === 0) {
+            // finished slot is empty
+            if ((tailCardID - 1) % 13 === 0) {
+              // found
+              this.setHint(this[`playSlotID${i}`], [tailCardID], this[`finishedSlotID${j}`]);
+              return true;
             }
-            else {
-              // finished slot has any card
-              const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
-              if (this.canAnyToFinished(playSlot, playSlot.length - 1, finishedSlot)) {
-                // found
-                this.setHint(this[`playSlotID${i}`], [tailCardID], this[`finishedSlotID${j}`]);
-                return true;
-              }
+          }
+          else {
+            // finished slot has any card
+            const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
+            if (this.canAnyToFinished(playSlot, playSlot.length - 1, finishedSlot)) {
+              // found
+              this.setHint(this[`playSlotID${i}`], [tailCardID], this[`finishedSlotID${j}`]);
+              return true;
             }
           }
         }
@@ -664,28 +675,33 @@ export default {
     },
     findHintFromPlayToPlay() {
       let i;
-      let j;
       this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
-      let iCard;    // card index from startIdx to the bottom in the play slot
       for (i = 0; i < 8; i += 1) {
-        const srcPlaySlot = this.cardsPlay[i];
-        if (srcPlaySlot.length > 0) {
+        if (this.cardsPlay[i].length > 0) {
           // play slot has any card
           const startIdx = this.findPlaySlotSequentialHead(i);
-          // loop from startIdx to the bottom
-          for (iCard = startIdx; iCard < srcPlaySlot.length; iCard += 1) {
-            // loop for target play-slot
-            for (j = 0; j < 8; j += 1) {
-              if (this.canDrag(i + this.playSlotID0, iCard) && this.canPlayToPlay(i, iCard, j)) {
-                // found
-                const cardIDs = [];
-                for (let k = iCard; k < srcPlaySlot.length; k += 1) {
-                  cardIDs.push(srcPlaySlot[k]);
-                }
-                this.setHint(this[`playSlotID${i}`], cardIDs, this[`playSlotID${j}`]);
-                return true;
-              }
+          if (this.findHintFromOnePlayCardToPlay(i, startIdx)) return true;
+        }
+      }
+      return false;
+    },
+    findHintFromOnePlayCardToPlay(playSlotID, startIdx) {
+      const i = playSlotID;
+      const srcPlaySlot = this.cardsPlay[i];
+      let j;
+      // loop from startIdx to the bottom
+      let iCard;    // card index from startIdx to the bottom in the play slot
+      for (iCard = startIdx; iCard < srcPlaySlot.length; iCard += 1) {
+        // loop for target play-slot
+        for (j = 0; j < 8; j += 1) {
+          if (this.canDrag(i + this.playSlotID0, iCard) && this.canPlayToPlay(i, iCard, j)) {
+            // found
+            const cardIDs = [];
+            for (let k = iCard; k < srcPlaySlot.length; k += 1) {
+              cardIDs.push(srcPlaySlot[k]);
             }
+            this.setHint(this[`playSlotID${i}`], cardIDs, this[`playSlotID${j}`]);
+            return true;
           }
         }
       }
@@ -693,25 +709,31 @@ export default {
     },
     findHintFromTempToPlay() {
       let i;
-      let j;
       this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
       for (i = 0; i < 4; i += 1) {
-        if (this.cardsTemp[i].length === 1) {
-          // temp slot has a card
-          for (j = 0; j < 8; j += 1) {
-            if (this.cardsPlay[j].length > 0) {
-              // play slot has any card
-              if (this.canTempToPlay(i, j)) {
-                // found
-                this.setHint(this[`tempSlotID${i}`], [this.cardsTemp[i][0]], this[`playSlotID${j}`]);
-                return true;
-              }
-            }
-            else {
+        if (this.findHintFromOneTempToPlay(i)) return true;
+      }
+      return false;
+    },
+    findHintFromOneTempToPlay(tempSlotID) {
+      const i = tempSlotID;
+      const tempSlot = this.cardsTemp[i];
+      let j;
+      if (tempSlot.length === 1) {
+        // temp slot has a card
+        for (j = 0; j < 8; j += 1) {
+          if (this.cardsPlay[j].length > 0) {
+            // play slot has any card
+            if (this.canTempToPlay(i, j)) {
               // found
-              this.setHint(this[`tempSlotID${i}`], [this.cardsTemp[i][0]], this[`playSlotID${j}`]);
+              this.setHint(this[`tempSlotID${i}`], [tempSlot[0]], this[`playSlotID${j}`]);
               return true;
             }
+          }
+          else {
+            // found
+            this.setHint(this[`tempSlotID${i}`], [tempSlot[0]], this[`playSlotID${j}`]);
+            return true;
           }
         }
       }
@@ -719,19 +741,24 @@ export default {
     },
     findHintFromPlayToTemp() {
       let i;
-      let j;
       this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
       for (i = 0; i < 8; i += 1) {
-        const playSlot = this.cardsPlay[i];
-        if (playSlot.length > 0) {      // play slot has any card
-          const tailCardID = playSlot[playSlot.length - 1];
+        if (this.findHintFromOnePlayToTemp(i)) return true;
+      }
+      return false;
+    },
+    findHintFromOnePlayToTemp(playSlotID) {
+      const i = playSlotID;
+      const playSlot = this.cardsPlay[i];
+      let j;
+      if (playSlot.length > 0) {      // play slot has any card
+        const tailCardID = playSlot[playSlot.length - 1];
 
-          for (j = 0; j < 4; j += 1) {
-            if (this.cardsTemp[j].length === 0) {
-              // found
-              this.setHint(this[`playSlotID${i}`], [tailCardID], this[`tempSlotID${j}`]);
-              return true;
-            }
+        for (j = 0; j < 4; j += 1) {
+          if (this.cardsTemp[j].length === 0) {
+            // found
+            this.setHint(this[`playSlotID${i}`], [tailCardID], this[`tempSlotID${j}`]);
+            return true;
           }
         }
       }
@@ -741,8 +768,9 @@ export default {
       this.hint = { srcSlotID, cardIDs, tarSlotID };
       alert(`${srcSlotID} --> ${tarSlotID} with ${cardIDs.length} cards (${cardIDs})`);
     },
+    // playSlotID must be valid
     findPlaySlotSequentialHead(playSlotID) {
-      let i;
+      let i = -1;
       let beFirst = true;
       let preCardInfo = {};
       let cardInfo = {};

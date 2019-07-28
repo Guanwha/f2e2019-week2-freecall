@@ -7,9 +7,11 @@
           <img src="../assets/logo-bk.svg">
         </div>
         <div class='middle'>
-          <img src="../assets/btn-more.svg">
+          <button v-bind:class="['menu', { disabled: false}]"/>
           <p>Time:{{playMinSec}}</p>
-          <img src="../assets/btn-return.svg">
+          <button v-bind:class="['undo', { disabled: noHistory}]"
+                  v-bind:disabled="noHistory"
+                  v-on:click.prevent="undo"/>
         </div>
         <div class='right'>
           <img src="../assets/bone.svg">
@@ -235,22 +237,24 @@ export default {
       tempSlotID3: 15,
       cardsTemp: this.clearTempCards(),
       cardsFinished: this.clearFinishedCards(),
-      // cardsPlay: this.newGame(),
-      cardsPlay: [
-        [],
-        [39, 12, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2, 27],
-        [13, 38, 11, 36, 9, 34, 7, 32, 5, 30, 3, 28, 1],
-        [40],
-        [41],
-        [43],
-        [44],
-        [45],
-      ],
+      cardsPlay: this.newGame(),
+      // cardsPlay: [
+      //   [],
+      //   [39, 12, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2, 27],
+      //   [13, 38, 11, 36, 9, 34, 7, 32, 5, 30, 3, 28, 1],
+      //   [40],
+      //   [41],
+      //   [43],
+      //   [44],
+      //   [45],
+      // ],
       cardsDragging: {
         srcSlotID: -1,
         cardIdx: -1,
       },
       slotTypes: cSlotTypes,
+
+      history: [],            // record each step ({ srcSlotID, cardIDs, tarSlotID })
 
       playTime: 0,            // play time (unit: second)
       steps: 0,               // used steps number
@@ -304,11 +308,13 @@ export default {
           if (!this.canPlayToPlay((srcSlotID - this.playSlotID0),
                                   startIdx,
                                   tarSlotID - this.playSlotID0)) return;
+          // -- push to history
+          this.recordHistory(srcSlotID, startIdx, tarSlotID);
+          // -- update cards
           for (let i = startIdx; i < srcSlot.length; i += 1) {
             toSlot.push(srcSlot[i]);
             srcSlot.splice(i, 1);
             i -= 1;
-            // console.log(`${JSON.stringify(srcSlot)} -- ${JSON.stringify(toSlot)}`);
           }
         }
         else if (srcSlotID <= this.finishedSlotID3) {
@@ -316,6 +322,9 @@ export default {
           if (!this.canFinishedToPlay((srcSlotID - this.finishedSlotID0),
                                       startIdx,
                                       tarSlotID - this.playSlotID0)) return;
+          // -- push to history
+          this.recordHistory(srcSlotID, startIdx, tarSlotID);
+          // -- update cards
           toSlot.push(srcSlot[srcSlot.length - 1]);
           srcSlot.pop();
         }
@@ -323,6 +332,9 @@ export default {
           // from temp slot to play slot
           if (!this.canTempToPlay((srcSlotID - this.tempSlotID0),
                                   tarSlotID - this.playSlotID0)) return;
+          // -- push to history
+          this.recordHistory(srcSlotID, startIdx, tarSlotID);
+          // -- update cards
           toSlot.push(srcSlot[0]);
           srcSlot.pop();
         }
@@ -334,6 +346,9 @@ export default {
         const tarSlot = this.cardsFinished[tarSlotID - this.finishedSlotID0];
         if (!this.canAnyToFinished(srcSlot, startIdx, tarSlot)) return;
         // -- from any slot to finished slot
+        // ---- push to history
+        this.recordHistory(this.cardsDragging.srcSlotID, startIdx, tarSlotID);
+        // ---- update cards
         this.cardsFinished[tarSlotID - this.finishedSlotID0].push(srcSlot[srcSlot.length - 1]);
         srcSlot.pop();
       }
@@ -343,6 +358,9 @@ export default {
         const srcSlot = this.getSlot(this.cardsDragging.srcSlotID);
         if (startIdx < srcSlot.length - 1) return;        // skip if dragging over 2 cards
         // -- from any slot to temp slot
+        // ---- push to history
+        this.recordHistory(this.cardsDragging.srcSlotID, startIdx, tarSlotID);
+        // ---- update cards
         const tempSlotID = tarSlotID - this.tempSlotID0;
         if (this.cardsTemp[tempSlotID][0]) return;         // skip if target has a card
         this.cardsTemp[tempSlotID][0] = srcSlot[srcSlot.length - 1];
@@ -429,7 +447,6 @@ export default {
       const nMovedCards = this.cardsPlay[playSlotID].length - cardIdx;
       let nEmptySlot = this.emptySlotNumber;
       nEmptySlot += 1;
-      console.log(`move ${nMovedCards} need under ${nEmptySlot}`);
 
       return (nMovedCards <= nEmptySlot);
     },
@@ -536,6 +553,36 @@ export default {
       }
       return true;
     },
+    recordHistory(srcSlotID, startIdx, tarSlotID) {
+      let i;
+      const cardIDs = [];
+      const srcSlot = this.getSlot(srcSlotID);
+      for (i = startIdx; i < srcSlot.length; i += 1) {
+        cardIDs.push(srcSlot[i]);
+      }
+      const action = { srcSlotID, cardIDs, tarSlotID };
+      this.history.push(action);
+    },
+    undo() {
+      console.log('undo');
+      if (this.history.length === 0) return;
+      const action = this.history[this.history.length - 1];
+      // remove target slot cards
+      let i;
+      const tarSlot = this.getSlot(action.tarSlotID);
+      for (i = 0; i < tarSlot.length; i += 1) {
+        if (action.cardIDs[0] === tarSlot[i]) {
+          break;
+        }
+      }
+      tarSlot.splice(i, tarSlot.length - i);
+      // recover source slot cards
+      const srcSlot = this.getSlot(action.srcSlotID);
+      for (i = 0; i < action.cardIDs.length; i += 1) {
+        srcSlot.push(action.cardIDs[i]);
+      }
+      this.history.pop();
+    },
   },
   computed: {
     playMinSec() {
@@ -565,6 +612,9 @@ export default {
       }
 
       return nEmptySlot;
+    },
+    noHistory() {
+      return this.history.length === 0;
     },
   },
 };
@@ -601,9 +651,28 @@ export default {
       display: flex;
       justify-content: center;
       align-items: center;
-      img {
+      .menu {
         width: 50px;
         height: 50px;
+        background: url("../assets/btn-more.svg");
+        border-width: 0;
+        outline-width: 0;
+        &:hover:not([disabled]) {
+          filter: drop-shadow(0 0 10px red);
+        }
+      }
+      .undo {
+        width: 50px;
+        height: 50px;
+        background: url("../assets/btn-return.svg");
+        border-width: 0;
+        outline-width: 0;
+        &:hover:not([disabled]) {
+          filter: drop-shadow(0 0 10px red);
+        }
+      }
+      .disabled {
+        filter: grayscale(100%);
       }
       p {
         font-size: $font-size-header;

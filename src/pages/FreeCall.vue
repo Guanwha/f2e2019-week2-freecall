@@ -7,7 +7,8 @@
           <img src="../assets/logo-bk.svg">
         </div>
         <div class='middle'>
-          <button v-bind:class="['menu', { disabled: false}]"/>
+          <button v-bind:class="['menu', { disabled: false}]"
+                  v-on:click.prevent="findHint"/>
           <p>Time:{{playMinSec}}</p>
           <button v-bind:class="['undo', { disabled: noHistory}]"
                   v-bind:disabled="noHistory"
@@ -239,12 +240,12 @@ export default {
       cardsFinished: this.clearFinishedCards(),
       cardsPlay: this.newGame(),
       // cardsPlay: [
+      //   [3, 28],
+      //   [39, 1, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2],
+      //   [13, 3, 11, 36, 9, 34, 7, 32, 5, 30],
+      //   [46],
       //   [],
-      //   [39, 12, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2, 27],
-      //   [13, 38, 11, 36, 9, 34, 7, 32, 5, 30, 3, 28, 1],
-      //   [40],
-      //   [41],
-      //   [43],
+      //   [17],
       //   [44],
       //   [45],
       // ],
@@ -255,6 +256,8 @@ export default {
       slotTypes: cSlotTypes,
 
       history: [],            // record each step ({ srcSlotID, cardIDs, tarSlotID })
+
+      hint: {},               // hint ({ srcSlotID, cardIDs, tarSlotID })
 
       playTime: 0,            // play time (unit: second)
       steps: 0,               // used steps number
@@ -522,19 +525,19 @@ export default {
       return this.checkLinkRule(sourceCardInfo, targetCardInfo);
     },
     // check source card can link to target card
-    checkLinkRule(sourceCardInfo, targetCardInfo) {
+    checkLinkRule(smallerCardInfo, largerCardInfo) {
       // check color
-      if (targetCardInfo.isRed === sourceCardInfo.isRed) {
+      if (largerCardInfo.isRed === smallerCardInfo.isRed) {
         return false;
       }
       // check number
-      else if (targetCardInfo.num !== sourceCardInfo.num + 1) {
+      else if (largerCardInfo.num !== smallerCardInfo.num + 1) {
         return false;
       }
       return true;
     },
     canAnyToFinished(srcSlot, startIdx, tarSlot) {
-      // skip if source has over 2 cards
+      // skip if moved cards has over 2 cards
       if (startIdx < srcSlot.length - 1) return false;
 
       // check link rule in finished slot
@@ -564,7 +567,6 @@ export default {
       this.history.push(action);
     },
     undo() {
-      console.log('undo');
       if (this.history.length === 0) return;
       const action = this.history[this.history.length - 1];
       // remove target slot cards
@@ -582,6 +584,186 @@ export default {
         srcSlot.push(action.cardIDs[i]);
       }
       this.history.pop();
+    },
+    findHint() {
+      // check temp card can move to finished slot
+      if (this.findHintFromTempToFinished()) return true;
+      // check play card can move move to finished slot
+      if (this.findHintFromPlayToFinished()) return true;
+      // check play card can move to another play slot
+      if (this.findHintFromPlayToPlay()) return true;
+      // check temp card can move to play slot
+      if (this.findHintFromTempToPlay()) return true;
+      // check play card can move to temp slot
+      if (this.findHintFromPlayToTemp()) return true;
+
+      alert('hint not found');
+      return false;
+    },
+    findHintFromTempToFinished() {
+      let i;
+      let j;
+      this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
+      for (i = 0; i < 4; i += 1) {
+        if (this.cardsTemp[i].length === 1) {
+          // temp slot has a card
+          const tempSlot = this.getSlot(this[`tempSlotID${i}`]);
+          for (j = 0; j < 4; j += 1) {
+            if (this.cardsFinished[j].length === 0) {
+              if ((this.cardsTemp[i][0] - 1) % 13 === 0) {
+                // found
+                this.setHint(this[`tempSlotID${i}`], this.cardsTemp[i][0], this[`finishedSlotID${j}`]);
+                return true;
+              }
+            }
+            else {
+              // finished slot has any card
+              const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
+              if (this.canAnyToFinished(tempSlot, 0, finishedSlot)) {
+                // found
+                this.setHint(this[`tempSlotID${i}`], this.cardsTemp[i][0], this[`finishedSlotID${j}`]);
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    },
+    findHintFromPlayToFinished() {
+      let i;
+      let j;
+      this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
+      for (i = 0; i < 8; i += 1) {
+        const playSlot = this.cardsPlay[i];
+        if (playSlot.length > 0) {      // play slot has any card
+          const tailCardID = playSlot[playSlot.length - 1];
+
+          for (j = 0; j < 4; j += 1) {
+            if (this.cardsFinished[j].length === 0) {
+              // finished slot is empty
+              if ((tailCardID - 1) % 13 === 0) {
+                // found
+                this.setHint(this[`playSlotID${i}`], [tailCardID], this[`finishedSlotID${j}`]);
+                return true;
+              }
+            }
+            else {
+              // finished slot has any card
+              const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
+              if (this.canAnyToFinished(playSlot, playSlot.length - 1, finishedSlot)) {
+                // found
+                this.setHint(this[`playSlotID${i}`], [tailCardID], this[`finishedSlotID${j}`]);
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    },
+    findHintFromPlayToPlay() {
+      let i;
+      let j;
+      this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
+      let iCard;    // card index from startIdx to the bottom in the play slot
+      for (i = 0; i < 8; i += 1) {
+        const srcPlaySlot = this.cardsPlay[i];
+        if (srcPlaySlot.length > 0) {
+          // play slot has any card
+          const startIdx = this.findPlaySlotSequentialHead(i);
+          // loop from startIdx to the bottom
+          for (iCard = startIdx; iCard < srcPlaySlot.length; iCard += 1) {
+            // loop for target play-slot
+            for (j = 0; j < 8; j += 1) {
+              if (this.canDrag(i + this.playSlotID0, iCard) && this.canPlayToPlay(i, iCard, j)) {
+                // found
+                const cardIDs = [];
+                for (let k = iCard; k < srcPlaySlot.length; k += 1) {
+                  cardIDs.push(srcPlaySlot[k]);
+                }
+                this.setHint(this[`playSlotID${i}`], cardIDs, this[`playSlotID${j}`]);
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    },
+    findHintFromTempToPlay() {
+      let i;
+      let j;
+      this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
+      for (i = 0; i < 4; i += 1) {
+        if (this.cardsTemp[i].length === 1) {
+          // temp slot has a card
+          for (j = 0; j < 8; j += 1) {
+            if (this.cardsPlay[j].length > 0) {
+              // play slot has any card
+              if (this.canTempToPlay(i, j)) {
+                // found
+                this.setHint(this[`tempSlotID${i}`], [this.cardsTemp[i][0]], this[`playSlotID${j}`]);
+                return true;
+              }
+            }
+            else {
+              // found
+              this.setHint(this[`tempSlotID${i}`], [this.cardsTemp[i][0]], this[`playSlotID${j}`]);
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    },
+    findHintFromPlayToTemp() {
+      let i;
+      let j;
+      this.hint = { srcSlotID: -1, cardIDs: [], tarSlotID: -1 };
+      for (i = 0; i < 8; i += 1) {
+        const playSlot = this.cardsPlay[i];
+        if (playSlot.length > 0) {      // play slot has any card
+          const tailCardID = playSlot[playSlot.length - 1];
+
+          for (j = 0; j < 4; j += 1) {
+            if (this.cardsTemp[j].length === 0) {
+              // found
+              this.setHint(this[`playSlotID${i}`], [tailCardID], this[`tempSlotID${j}`]);
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    },
+    setHint(srcSlotID, cardIDs, tarSlotID) {
+      this.hint = { srcSlotID, cardIDs, tarSlotID };
+      alert(`${srcSlotID} --> ${tarSlotID} with ${cardIDs.length} cards (${cardIDs})`);
+    },
+    findPlaySlotSequentialHead(playSlotID) {
+      let i;
+      let beFirst = true;
+      let preCardInfo = {};
+      let cardInfo = {};
+      const cardSlot = this.cardsPlay[playSlotID];
+      const nTotalCards = cardSlot.length;
+      // check from bottom to top
+      for (i = nTotalCards - 1; i >= 0; i -= 1) {
+        cardInfo = this.analysisCard(cardSlot[i]);
+        // don't check at first
+        if (beFirst) {
+          beFirst = false;
+        }
+        else if (!this.checkLinkRule(preCardInfo, cardInfo)) {
+          // discontinous card found
+          break;
+        }
+
+        preCardInfo = cardInfo;
+      }
+
+      return i + 1;
     },
   },
   computed: {
@@ -704,6 +886,7 @@ export default {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    z-index: 1;
   }
   &-footer {
     width: 100%;

@@ -238,10 +238,10 @@ export default {
       // cardsPlay: this.newGame(),
       cardsPlay: [
         [],
-        [39, 12, 37, 10, 35, 8, 33, 6, 31, 4],
-        [23],
+        [39, 12, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2, 27],
+        [13, 38, 11, 36, 9, 34, 7, 32, 5, 30, 3, 28, 1],
+        [40],
         [41],
-        [42],
         [43],
         [44],
         [45],
@@ -331,7 +331,8 @@ export default {
         // target slot is in finished area
         const startIdx = this.cardsDragging.cardIdx;
         const srcSlot = this.getSlot(this.cardsDragging.srcSlotID);
-        if (startIdx < srcSlot.length - 1) return;       // skip if source has over 2 cards
+        const tarSlot = this.cardsFinished[tarSlotID - this.finishedSlotID0];
+        if (!this.canAnyToFinished(srcSlot, startIdx, tarSlot)) return;
         // -- from any slot to finished slot
         this.cardsFinished[tarSlotID - this.finishedSlotID0].push(srcSlot[srcSlot.length - 1]);
         srcSlot.pop();
@@ -512,6 +513,26 @@ export default {
       // check number
       else if (targetCardInfo.num !== sourceCardInfo.num + 1) {
         return false;
+      }
+      return true;
+    },
+    canAnyToFinished(srcSlot, startIdx, tarSlot) {
+      // skip if source has over 2 cards
+      if (startIdx < srcSlot.length - 1) return false;
+
+      // check link rule in finished slot
+      if (tarSlot.length === 0) {
+        // when finished slot is empty, source card must be 1
+        if ((srcSlot[startIdx] - 1) % 13 !== 0) return false;
+      }
+      else {
+        // when finished slot isn't empty, source card must be target card # + 1
+        const srcCard = srcSlot[startIdx];
+        const tarCard = tarSlot[tarSlot.length - 1];
+        // -- check the card number
+        if (srcCard !== tarCard + 1) return false;
+        // -- check the card type
+        if (((srcCard - 1) % 13 !== ((tarCard - 1) % 13) + 1)) return false;
       }
       return true;
     },

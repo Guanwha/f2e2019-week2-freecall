@@ -27,28 +27,32 @@
                  @drop="drop($event, tempSlotID0)"
                  @dragover.prevent
                  @dragstart="dragStart($event, tempSlotID0, 0)"
-                 @dragend="dragEnd($event)">
+                 @dragend="dragEnd($event)"
+                 @click.prevent="autoMove(tempSlotID0, 0)">
               <Card v-bind:pCardID='tempSlotCard(0)' v-bind:pSlotType='slotTypes.temp'/>
             </div>
             <div draggable="true"
                  @drop="drop($event, tempSlotID1)"
                  @dragover.prevent
                  @dragstart="dragStart($event, tempSlotID1, 0)"
-                 @dragend="dragEnd($event)">
+                 @dragend="dragEnd($event)"
+                 @click.prevent="autoMove(tempSlotID1, 0)">
               <Card v-bind:pCardID='tempSlotCard(1)' v-bind:pSlotType='slotTypes.temp'/>
             </div>
             <div draggable="true"
                  @drop="drop($event, tempSlotID2)"
                  @dragover.prevent
                  @dragstart="dragStart($event, tempSlotID2, 0)"
-                 @dragend="dragEnd($event)">
+                 @dragend="dragEnd($event)"
+                 @click.prevent="autoMove(tempSlotID2, 0)">
               <Card v-bind:pCardID='tempSlotCard(2)' v-bind:pSlotType='slotTypes.temp'/>
             </div>
             <div draggable="true"
                  @drop="drop($event, tempSlotID3)"
                  @dragover.prevent
                  @dragstart="dragStart($event, tempSlotID3, 0)"
-                 @dragend="dragEnd($event)">
+                 @dragend="dragEnd($event)"
+                 @click.prevent="autoMove(tempSlotID3, 0)">
               <Card v-bind:pCardID='tempSlotCard(3)' v-bind:pSlotType='slotTypes.temp'/>
             </div>
           </div>
@@ -95,7 +99,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID0, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID0, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -108,7 +113,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID1, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID1, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -121,7 +127,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID2, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID2, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -134,7 +141,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID3, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID3, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -149,7 +157,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID4, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID4, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -162,7 +171,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID5, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID5, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -175,7 +185,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID6, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID6, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -188,7 +199,8 @@
                    v-bind:style="{position: 'absolute', top: cardShiftY(index)}"
                    draggable="true"
                    @dragstart="dragStart($event, playSlotID7, index)"
-                   @dragend="dragEnd($event)">
+                   @dragend="dragEnd($event)"
+                   @click.prevent="autoMove(playSlotID7, index)">
                 <Card v-bind:pCardID="cardID"
                       v-bind:pSlotType="slotTypes.normal"/>
               </div>
@@ -566,9 +578,16 @@ export default {
       const action = { srcSlotID, cardIDs, tarSlotID };
       this.history.push(action);
     },
+    recordHistoryFromHint() {
+      this.history.push(this.hint);
+    },
     undo() {
       if (this.history.length === 0) return;
       const action = this.history[this.history.length - 1];
+      this.undoAction(action);
+      this.history.pop();
+    },
+    undoAction(action) {
       // remove target slot cards
       let i;
       const tarSlot = this.getSlot(action.tarSlotID);
@@ -583,7 +602,6 @@ export default {
       for (i = 0; i < action.cardIDs.length; i += 1) {
         srcSlot.push(action.cardIDs[i]);
       }
-      this.history.pop();
     },
     findHint() {
       // check temp card can move to finished slot
@@ -619,7 +637,7 @@ export default {
             // finished slot is empty
             if ((tempSlot[0] - 1) % 13 === 0) {
               // found
-              this.setHint(this[`tempSlotID${i}`], tempSlot[0], this[`finishedSlotID${j}`]);
+              this.setHint(this[`tempSlotID${i}`], [tempSlot[0]], this[`finishedSlotID${j}`]);
               return true;
             }
           }
@@ -628,7 +646,7 @@ export default {
             const finishedSlot = this.getSlot(this[`finishedSlotID${j}`]);
             if (this.canAnyToFinished(tempSlot, 0, finishedSlot)) {
               // found
-              this.setHint(this[`tempSlotID${i}`], tempSlot[0], this[`finishedSlotID${j}`]);
+              this.setHint(this[`tempSlotID${i}`], [tempSlot[0]], this[`finishedSlotID${j}`]);
               return true;
             }
           }
@@ -792,6 +810,53 @@ export default {
       }
 
       return i + 1;
+    },
+    autoMove(slotID, cardIdx) {
+      if (slotID < 0) return;
+      if (slotID <= this.playSlotID7) {
+        // play slot
+        if (this.autoMoveFromPlay((slotID - this.playSlotID0), cardIdx)) {
+          console.log(this.hint);
+          this.doAction(this.hint);
+          this.recordHistoryFromHint();
+        }
+      }
+      else if (slotID >= this.tempSlotID0 && slotID <= this.tempSlotID3) {
+        // temp slot
+        if (this.autoMoveFromTemp(slotID - this.tempSlotID0)) {
+          console.log(this.hint);
+          this.doAction(this.hint);
+          this.recordHistoryFromHint();
+        }
+      }
+    },
+    autoMoveFromPlay(playSlotID, cardIdx) {
+      const isBottomCard = ((this.cardsPlay[playSlotID].length - cardIdx) === 1);
+      if (isBottomCard && this.findHintFromOnePlayToFinished(playSlotID)) return true;
+      if (this.findHintFromOnePlayCardToPlay(playSlotID, cardIdx)) return true;
+      if (isBottomCard && this.findHintFromOnePlayToTemp(playSlotID)) return true;
+      return false;
+    },
+    autoMoveFromTemp(tempSlotID) {
+      if (this.findHintFromOneTempToFinished(tempSlotID)) return true;
+      if (this.findHintFromOneTempToPlay(tempSlotID)) return true;
+      return false;
+    },
+    doAction(action) {
+      // remove source slot cards
+      let i;
+      const srcSlot = this.getSlot(action.srcSlotID);
+      for (i = 0; i < srcSlot.length; i += 1) {
+        if (action.cardIDs[0] === srcSlot[i]) {
+          break;
+        }
+      }
+      srcSlot.splice(i, srcSlot.length - i);
+      // recover target slot cards
+      const tarSlot = this.getSlot(action.tarSlotID);
+      for (i = 0; i < action.cardIDs.length; i += 1) {
+        tarSlot.push(action.cardIDs[i]);
+      }
     },
   },
   computed: {

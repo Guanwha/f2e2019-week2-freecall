@@ -7,6 +7,8 @@
         <div class="inner-dialog">
           <div class="title"><img src="../assets/word-new-game.png"></div>
           <button @click.prevent="$emit('new-game')">Start a New Game</button>
+          <button @click.prevent="$emit('restart-game')">Restart This Game</button>
+          <button @click.prevent="$emit('cancel')">Keep Playing</button>
         </div>
       </div>  
     </div>
@@ -15,7 +17,7 @@
 
 <script>
 export default {
-  name: 'DialogNewGame',
+  name: 'DialogMenu',
 };
 </script>
 
@@ -49,7 +51,7 @@ export default {
 }
 .outer-dialog {
   width: 678px;
-  height: 269px;
+  height: 419px;
   border: 4px solid $color-black;
   border-radius: 10px;
   background: $color-white;
@@ -59,7 +61,7 @@ export default {
 }
 .inner-dialog {
   width: 663px;
-  height: 255px;
+  height: 405px;
   border: 4px solid $color-second;
   border-radius: 5px;
   background: $color-main;

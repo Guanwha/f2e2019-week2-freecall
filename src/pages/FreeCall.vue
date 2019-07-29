@@ -8,7 +8,7 @@
         </div>
         <div class='middle'>
           <button v-bind:class="['menu', { disabled: false}]"
-                  v-on:click.prevent="findHint"/>
+                  v-on:click.prevent="openMenu"/>
           <p>Time:{{playMinSec}}</p>
           <button v-bind:class="['undo', { disabled: noHistory}]"
                   v-bind:disabled="noHistory"
@@ -219,12 +219,17 @@
     </div>
     <!-- dialog -->
     <DialogNewGame v-if="status === gameStatus.start" @new-game="newGame"/>
+    <DialogMenu v-if="status === gameStatus.menu"
+                @new-game="newGame"
+                @restart-game="restartGame"
+                @cancel="closeMenu"/>
   </div>
 </template>
 
 <script>
 import Card from '../components/Card';
 import DialogNewGame from '../components/DialogNewGame';
+import DialogMenu from '../components/DialogMenu';
 import { cSlotTypes, cGameStatus } from '../common/constants';
 
 export default {
@@ -232,6 +237,7 @@ export default {
   components: {
     Card,
     DialogNewGame,
+    DialogMenu,
   },
   data() {
     return {
@@ -253,6 +259,7 @@ export default {
       tempSlotID3: 15,
       cardsTemp: this.clearTempCards(),
       cardsFinished: this.clearFinishedCards(),
+      cardsPlayBackup: [[], [], [], [], [], [], [], []],
       cardsPlay: [[], [], [], [], [], [], [], []],
       // cardsPlay: [
       //   [3, 28],
@@ -286,9 +293,11 @@ export default {
 
       // game flow
       gameStatus: cGameStatus,
-      status: cGameStatus.start,  // game status
+      preStatus: cGameStatus.showRule,    // previous game status
+      status: cGameStatus.start,          // game status
 
       // game data
+      timer: null,
       playTime: 0,            // play time (unit: second)
       steps: 0,               // used steps number
     };
@@ -452,6 +461,8 @@ export default {
     },
     newGame() {
       // initialize
+      this.cardsTemp = this.clearTempCards();
+      this.cardsFinished = this.clearFinishedCards();
       let i;
       const cardsPlay = [];
       for (i = 0; i < 8; i += 1) {
@@ -481,15 +492,25 @@ export default {
       // console.log(cardsPlay);
 
       // start to accumulate the play time
-      this.status = this.gameStatus.playing;
+      this.cardsPlayBackup = JSON.parse(JSON.stringify(cardsPlay));
+      this.restartGame();
+    },
+    restartGame() {
+      this.updateStatus(this.gameStatus.playing);
+      this.cardsTemp = this.clearTempCards();
+      this.cardsFinished = this.clearFinishedCards();
+      this.cardsPlay = JSON.parse(JSON.stringify(this.cardsPlayBackup));
       this.playTime = 0;
-      this.accumulateTime();
 
-      this.cardsPlay = cardsPlay;
+      if (this.timer) {
+        clearTimeout(this.timer);
+        this.timer = null;
+      }
+      this.accumulateTime();
     },
     // accumulate the play time
     accumulateTime() {
-      setTimeout(() => {
+      this.timer = setTimeout(() => {
         this.playTime += 1;
         this.accumulateTime();
       }, 1000);
@@ -917,6 +938,16 @@ export default {
           this.autoDetect();
         }
       }, 100);
+    },
+    updateStatus(newStatus) {
+      this.preStatus = this.status;
+      this.status = newStatus;
+    },
+    openMenu() {
+      this.updateStatus(this.gameStatus.menu);
+    },
+    closeMenu() {
+      this.updateStatus(this.preStatus);
     },
   },
   computed: {

@@ -261,6 +261,16 @@ export default {
       //   [44],
       //   [45],
       // ],
+      // cardsPlay: [
+      //   [7, 6, 5, 4, 3, 2, 1],
+      //   [19, 18, 17, 16, 15, 14],
+      //   [33, 32, 31, 30, 29, 28, 27],
+      //   [45, 44, 43, 42, 41, 40],
+      //   [13, 12, 11, 10, 9, 8],
+      //   [26, 25, 24, 23, 22, 21, 20],
+      //   [39, 38, 37, 36, 35, 34],
+      //   [52, 51, 50, 49, 48, 47, 46],
+      // ],
       cardsDragging: {
         srcSlotID: -1,
         cardIdx: -1,
@@ -331,6 +341,8 @@ export default {
             srcSlot.splice(i, 1);
             i -= 1;
           }
+          // -- auto-detect
+          this.autoDetect();
         }
         else if (srcSlotID <= this.finishedSlotID3) {
           // from finished slot to play slot
@@ -342,6 +354,8 @@ export default {
           // -- update cards
           toSlot.push(srcSlot[srcSlot.length - 1]);
           srcSlot.pop();
+          // -- auto-detect
+          this.autoDetect();
         }
         else if (srcSlotID <= this.tempSlotID3) {
           // from temp slot to play slot
@@ -352,6 +366,8 @@ export default {
           // -- update cards
           toSlot.push(srcSlot[0]);
           srcSlot.pop();
+          // -- auto-detect
+          this.autoDetect();
         }
       }
       else if (tarSlotID <= this.finishedSlotID3) {
@@ -366,6 +382,8 @@ export default {
         // ---- update cards
         this.cardsFinished[tarSlotID - this.finishedSlotID0].push(srcSlot[srcSlot.length - 1]);
         srcSlot.pop();
+        // -- auto-detect
+        this.autoDetect();
       }
       else if (tarSlotID <= this.tempSlotID3) {
         // target slot is in temp area
@@ -380,6 +398,8 @@ export default {
         if (this.cardsTemp[tempSlotID][0]) return;         // skip if target has a card
         this.cardsTemp[tempSlotID][0] = srcSlot[srcSlot.length - 1];
         srcSlot.pop();
+        // -- auto-detect
+        this.autoDetect();
       }
     },
     // get local id in play/finished/temp slot ID
@@ -604,16 +624,14 @@ export default {
       }
     },
     findHint() {
-      // check temp card can move to finished slot
-      if (this.findHintFromTempToFinished()) return true;
-      // check play card can move move to finished slot
-      if (this.findHintFromPlayToFinished()) return true;
-      // check play card can move to another play slot
-      if (this.findHintFromPlayToPlay()) return true;
-      // check temp card can move to play slot
-      if (this.findHintFromTempToPlay()) return true;
-      // check play card can move to temp slot
-      if (this.findHintFromPlayToTemp()) return true;
+      if (this.findHintFromTempToFinished()     // check temp card can move to finished slot
+       || this.findHintFromPlayToFinished()     // check play card can move move to finished slot
+       || this.findHintFromPlayToPlay()         // check play card can move to another play slot
+       || this.findHintFromTempToPlay()         // check temp card can move to play slot
+       || this.findHintFromPlayToTemp()) {      // check play card can move to temp slot
+        alert(`${this.hint.srcSlotID} --> ${this.hint.tarSlotID} with ${this.hint.cardIDs.length} cards (${this.hint.cardIDs})`);
+        return true;
+      }
 
       alert('hint not found');
       return false;
@@ -784,7 +802,6 @@ export default {
     },
     setHint(srcSlotID, cardIDs, tarSlotID) {
       this.hint = { srcSlotID, cardIDs, tarSlotID };
-      alert(`${srcSlotID} --> ${tarSlotID} with ${cardIDs.length} cards (${cardIDs})`);
     },
     // playSlotID must be valid
     findPlaySlotSequentialHead(playSlotID) {
@@ -819,6 +836,8 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
+          // -- auto-detect
+          this.autoDetect();
         }
       }
       else if (slotID >= this.tempSlotID0 && slotID <= this.tempSlotID3) {
@@ -827,6 +846,8 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
+          // -- auto-detect
+          this.autoDetect();
         }
       }
     },
@@ -857,6 +878,18 @@ export default {
       for (i = 0; i < action.cardIDs.length; i += 1) {
         tarSlot.push(action.cardIDs[i]);
       }
+    },
+    autoDetect() {
+      setTimeout(() => {
+        if (this.findHintFromTempToFinished()
+        || this.findHintFromPlayToFinished()) {
+          console.log(this.hint);
+          this.doAction(this.hint);
+          this.recordHistoryFromHint();
+          // -- auto-detect
+          this.autoDetect();
+        }
+      }, 100);
     },
   },
   computed: {

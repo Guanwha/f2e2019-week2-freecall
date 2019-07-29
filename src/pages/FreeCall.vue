@@ -4,18 +4,18 @@
     <div class="main">
       <div class="main-header">
         <div class='left'>
-          <img src="../assets/logo-bk.svg">
+          <img src="../assets/logo-bk.svg" draggable="false">
         </div>
         <div class='middle'>
           <button v-bind:class="['menu', { disabled: false}]"
-                  v-on:click.prevent="findHint"/>
+                  v-on:click.prevent="openMenu"/>
           <p>Time:{{playMinSec}}</p>
           <button v-bind:class="['undo', { disabled: noHistory}]"
                   v-bind:disabled="noHistory"
                   v-on:click.prevent="undo"/>
         </div>
         <div class='right'>
-          <img src="../assets/bone.svg">
+          <img src="../assets/bone.svg" draggable="false">
           <p>Move: {{steps}}</p>
         </div>
       </div>
@@ -209,26 +209,40 @@
         </div>
       </div>
       <div class="main-footer">
-        <img class="left" src="../assets/bg-left.png">
+        <img class="left" src="../assets/bg-left.png" draggable="false">
         <div class="middle">
           <p>QUICKLY</p>
-          <img src="../assets/bg-JQK.svg">
+          <img src="../assets/bg-JQK.svg" draggable="false">
         </div>
-        <img class="right" src="../assets/bg-right.png">
+        <img class="right" src="../assets/bg-right.png" draggable="false">
       </div>
     </div>
     <!-- dialog -->
+    <DialogNewGame v-if="status === gameStatus.start" @new-game="newGame"/>
+    <DialogMenu v-if="status === gameStatus.menu"
+                @new-game="newGame"
+                @restart-game="restartGame"
+                @cancel="closeMenu"/>
+    <DialogFinished v-if="status === gameStatus.finished"
+                    @new-game="newGame"
+                    @restart-game="restartGame"/>
   </div>
 </template>
 
 <script>
 import Card from '../components/Card';
-import { cSlotTypes } from '../common/constants';
+import DialogNewGame from '../components/DialogNewGame';
+import DialogMenu from '../components/DialogMenu';
+import DialogFinished from '../components/DialogFinished';
+import { cSlotTypes, cGameStatus } from '../common/constants';
 
 export default {
   name: 'FreeCall',
   components: {
     Card,
+    DialogNewGame,
+    DialogMenu,
+    DialogFinished,
   },
   data() {
     return {
@@ -250,7 +264,8 @@ export default {
       tempSlotID3: 15,
       cardsTemp: this.clearTempCards(),
       cardsFinished: this.clearFinishedCards(),
-      cardsPlay: this.newGame(),
+      cardsPlayBackup: [[], [], [], [], [], [], [], []],
+      cardsPlay: [[], [], [], [], [], [], [], []],
       // cardsPlay: [
       //   [3, 28],
       //   [39, 1, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2],
@@ -277,10 +292,17 @@ export default {
       },
       slotTypes: cSlotTypes,
 
+      // game help
       history: [],            // record each step ({ srcSlotID, cardIDs, tarSlotID })
-
       hint: {},               // hint ({ srcSlotID, cardIDs, tarSlotID })
 
+      // game flow
+      gameStatus: cGameStatus,
+      preStatus: cGameStatus.showRule,    // previous game status
+      status: cGameStatus.start,          // game status
+
+      // game data
+      timer: null,
       playTime: 0,            // play time (unit: second)
       steps: 0,               // used steps number
     };
@@ -341,6 +363,7 @@ export default {
             srcSlot.splice(i, 1);
             i -= 1;
           }
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -354,6 +377,7 @@ export default {
           // -- update cards
           toSlot.push(srcSlot[srcSlot.length - 1]);
           srcSlot.pop();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -366,6 +390,7 @@ export default {
           // -- update cards
           toSlot.push(srcSlot[0]);
           srcSlot.pop();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -382,6 +407,7 @@ export default {
         // ---- update cards
         this.cardsFinished[tarSlotID - this.finishedSlotID0].push(srcSlot[srcSlot.length - 1]);
         srcSlot.pop();
+        this.steps += 1;
         // -- auto-detect
         this.autoDetect();
       }
@@ -398,6 +424,7 @@ export default {
         if (this.cardsTemp[tempSlotID][0]) return;         // skip if target has a card
         this.cardsTemp[tempSlotID][0] = srcSlot[srcSlot.length - 1];
         srcSlot.pop();
+        this.steps += 1;
         // -- auto-detect
         this.autoDetect();
       }
@@ -439,6 +466,8 @@ export default {
     },
     newGame() {
       // initialize
+      this.cardsTemp = this.clearTempCards();
+      this.cardsFinished = this.clearFinishedCards();
       let i;
       const cardsPlay = [];
       for (i = 0; i < 8; i += 1) {
@@ -467,7 +496,29 @@ export default {
       }
       // console.log(cardsPlay);
 
-      return cardsPlay;
+      // start to accumulate the play time
+      this.cardsPlayBackup = JSON.parse(JSON.stringify(cardsPlay));
+      this.restartGame();
+    },
+    restartGame() {
+      this.updateStatus(this.gameStatus.playing);
+      this.cardsTemp = this.clearTempCards();
+      this.cardsFinished = this.clearFinishedCards();
+      this.cardsPlay = JSON.parse(JSON.stringify(this.cardsPlayBackup));
+      this.playTime = 0;
+
+      if (this.timer) {
+        clearTimeout(this.timer);
+        this.timer = null;
+      }
+      this.accumulateTime();
+    },
+    // accumulate the play time
+    accumulateTime() {
+      this.timer = setTimeout(() => {
+        this.playTime += 1;
+        this.accumulateTime();
+      }, 1000);
     },
     // check draggin cards number
     canDrag(srcSlotID, cardIdx) {
@@ -836,6 +887,7 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -846,6 +898,7 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -886,16 +939,38 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
-          // -- auto-detect
-          this.autoDetect();
+          if (!this.checkFinished()) {
+            // -- auto-detect
+            this.autoDetect();
+          }
         }
       }, 100);
+    },
+    updateStatus(newStatus) {
+      this.preStatus = this.status;
+      this.status = newStatus;
+    },
+    openMenu() {
+      this.updateStatus(this.gameStatus.menu);
+    },
+    closeMenu() {
+      this.updateStatus(this.preStatus);
+    },
+    checkFinished() {
+      if (this.cardsFinished[0].length === 13
+       && this.cardsFinished[1].length === 13
+       && this.cardsFinished[2].length === 13
+       && this.cardsFinished[3].length === 13) {
+        this.updateStatus(this.gameStatus.finished);
+        return true;
+      }
+      return false;
     },
   },
   computed: {
     playMinSec() {
-      const min = this.playTime % 60;
-      const sec = this.playTime - (min * 60);
+      const min = parseInt((this.playTime / 60), 10);
+      const sec = parseInt((this.playTime % 60), 10);
       if (min < 10) {
         return (sec < 10) ? `0${min}:0${sec}` : `0${min}:${sec}`;
       }
@@ -935,6 +1010,7 @@ export default {
   height: 100%;
   width: 1280px;
   margin: 0 auto;
+  position: relative;
 }
 .main {
   height: 100%;
@@ -1083,7 +1159,6 @@ export default {
 .area-play {
   width: $card-width;
   height: 100%;
-  background: purple;
   position: relative;
 }
 </style>

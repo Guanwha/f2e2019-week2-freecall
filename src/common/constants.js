@@ -61,3 +61,12 @@ export const cCards = (id) => {
   };
   return cards[id];
 };
+
+export const cGameStatus = {
+  showRule: 0,
+  start: 1,
+  playing: 2,
+  menu: 3,
+  noMoreMoves: 4,
+  finished: 5,
+};

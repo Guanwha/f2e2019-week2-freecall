@@ -218,17 +218,20 @@
       </div>
     </div>
     <!-- dialog -->
+    <DialogNewGame v-if="status === gameStatus.start" @new-game="newGame"/>
   </div>
 </template>
 
 <script>
 import Card from '../components/Card';
-import { cSlotTypes } from '../common/constants';
+import DialogNewGame from '../components/DialogNewGame';
+import { cSlotTypes, cGameStatus } from '../common/constants';
 
 export default {
   name: 'FreeCall',
   components: {
     Card,
+    DialogNewGame,
   },
   data() {
     return {
@@ -250,7 +253,7 @@ export default {
       tempSlotID3: 15,
       cardsTemp: this.clearTempCards(),
       cardsFinished: this.clearFinishedCards(),
-      cardsPlay: this.newGame(),
+      cardsPlay: [[], [], [], [], [], [], [], []],
       // cardsPlay: [
       //   [3, 28],
       //   [39, 1, 37, 10, 35, 8, 33, 6, 31, 4, 29, 2],
@@ -277,10 +280,15 @@ export default {
       },
       slotTypes: cSlotTypes,
 
+      // game help
       history: [],            // record each step ({ srcSlotID, cardIDs, tarSlotID })
-
       hint: {},               // hint ({ srcSlotID, cardIDs, tarSlotID })
 
+      // game flow
+      gameStatus: cGameStatus,
+      status: cGameStatus.start,  // game status
+
+      // game data
       playTime: 0,            // play time (unit: second)
       steps: 0,               // used steps number
     };
@@ -473,10 +481,11 @@ export default {
       // console.log(cardsPlay);
 
       // start to accumulate the play time
+      this.status = this.gameStatus.playing;
       this.playTime = 0;
       this.accumulateTime();
 
-      return cardsPlay;
+      this.cardsPlay = cardsPlay;
     },
     // accumulate the play time
     accumulateTime() {
@@ -953,6 +962,7 @@ export default {
   height: 100%;
   width: 1280px;
   margin: 0 auto;
+  position: relative;
 }
 .main {
   height: 100%;

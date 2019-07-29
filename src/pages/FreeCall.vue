@@ -223,6 +223,9 @@
                 @new-game="newGame"
                 @restart-game="restartGame"
                 @cancel="closeMenu"/>
+    <DialogFinished v-if="status === gameStatus.finished"
+                    @new-game="newGame"
+                    @restart-game="restartGame"/>
   </div>
 </template>
 
@@ -230,6 +233,7 @@
 import Card from '../components/Card';
 import DialogNewGame from '../components/DialogNewGame';
 import DialogMenu from '../components/DialogMenu';
+import DialogFinished from '../components/DialogFinished';
 import { cSlotTypes, cGameStatus } from '../common/constants';
 
 export default {
@@ -238,6 +242,7 @@ export default {
     Card,
     DialogNewGame,
     DialogMenu,
+    DialogFinished,
   },
   data() {
     return {
@@ -934,8 +939,10 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
-          // -- auto-detect
-          this.autoDetect();
+          if (!this.checkFinished()) {
+            // -- auto-detect
+            this.autoDetect();
+          }
         }
       }, 100);
     },
@@ -948,6 +955,16 @@ export default {
     },
     closeMenu() {
       this.updateStatus(this.preStatus);
+    },
+    checkFinished() {
+      if (this.cardsFinished[0].length === 13
+       && this.cardsFinished[1].length === 13
+       && this.cardsFinished[2].length === 13
+       && this.cardsFinished[3].length === 13) {
+        this.updateStatus(this.gameStatus.finished);
+        return true;
+      }
+      return false;
     },
   },
   computed: {

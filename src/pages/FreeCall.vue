@@ -4,7 +4,7 @@
     <div class="main">
       <div class="main-header">
         <div class='left'>
-          <img src="../assets/logo-bk.svg">
+          <img src="../assets/logo-bk.svg" draggable="false">
         </div>
         <div class='middle'>
           <button v-bind:class="['menu', { disabled: false}]"
@@ -15,7 +15,7 @@
                   v-on:click.prevent="undo"/>
         </div>
         <div class='right'>
-          <img src="../assets/bone.svg">
+          <img src="../assets/bone.svg" draggable="false">
           <p>Move: {{steps}}</p>
         </div>
       </div>
@@ -209,12 +209,12 @@
         </div>
       </div>
       <div class="main-footer">
-        <img class="left" src="../assets/bg-left.png">
+        <img class="left" src="../assets/bg-left.png" draggable="false">
         <div class="middle">
           <p>QUICKLY</p>
-          <img src="../assets/bg-JQK.svg">
+          <img src="../assets/bg-JQK.svg" draggable="false">
         </div>
-        <img class="right" src="../assets/bg-right.png">
+        <img class="right" src="../assets/bg-right.png" draggable="false">
       </div>
     </div>
     <!-- dialog -->

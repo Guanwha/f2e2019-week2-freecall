@@ -341,6 +341,7 @@ export default {
             srcSlot.splice(i, 1);
             i -= 1;
           }
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -354,6 +355,7 @@ export default {
           // -- update cards
           toSlot.push(srcSlot[srcSlot.length - 1]);
           srcSlot.pop();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -366,6 +368,7 @@ export default {
           // -- update cards
           toSlot.push(srcSlot[0]);
           srcSlot.pop();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -382,6 +385,7 @@ export default {
         // ---- update cards
         this.cardsFinished[tarSlotID - this.finishedSlotID0].push(srcSlot[srcSlot.length - 1]);
         srcSlot.pop();
+        this.steps += 1;
         // -- auto-detect
         this.autoDetect();
       }
@@ -398,6 +402,7 @@ export default {
         if (this.cardsTemp[tempSlotID][0]) return;         // skip if target has a card
         this.cardsTemp[tempSlotID][0] = srcSlot[srcSlot.length - 1];
         srcSlot.pop();
+        this.steps += 1;
         // -- auto-detect
         this.autoDetect();
       }
@@ -467,7 +472,18 @@ export default {
       }
       // console.log(cardsPlay);
 
+      // start to accumulate the play time
+      this.playTime = 0;
+      this.accumulateTime();
+
       return cardsPlay;
+    },
+    // accumulate the play time
+    accumulateTime() {
+      setTimeout(() => {
+        this.playTime += 1;
+        this.accumulateTime();
+      }, 1000);
     },
     // check draggin cards number
     canDrag(srcSlotID, cardIdx) {
@@ -836,6 +852,7 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -846,6 +863,7 @@ export default {
           console.log(this.hint);
           this.doAction(this.hint);
           this.recordHistoryFromHint();
+          this.steps += 1;
           // -- auto-detect
           this.autoDetect();
         }
@@ -894,8 +912,8 @@ export default {
   },
   computed: {
     playMinSec() {
-      const min = this.playTime % 60;
-      const sec = this.playTime - (min * 60);
+      const min = parseInt((this.playTime / 60), 10);
+      const sec = parseInt((this.playTime % 60), 10);
       if (min < 10) {
         return (sec < 10) ? `0${min}:0${sec}` : `0${min}:${sec}`;
       }
@@ -1083,7 +1101,6 @@ export default {
 .area-play {
   width: $card-width;
   height: 100%;
-  background: purple;
   position: relative;
 }
 </style>

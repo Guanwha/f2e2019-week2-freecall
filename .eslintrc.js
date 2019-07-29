@@ -45,6 +45,12 @@ module.exports = {
       optionalDependencies: ['test/unit/index.js']
     }],
     // allow debugger during development
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    // allow multi-spaces before comments for reading
+    'no-multi-spaces': ["error", { ignoreEOLComments: true }],
+    // allow else can be next-line
+    'brace-style': ["error", "stroustrup"],
+    // allow function parameter indent
+    'indent': ["error", 2, {"FunctionExpression": {"parameters": "first"}, "CallExpression": {"arguments": "first"}}],
   }
 }
